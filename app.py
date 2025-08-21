@@ -1,51 +1,159 @@
 import streamlit as st
 import pandas as pd
 
-st.title("🛠 Automated Troubleshooting Agent")
+# ---------- Custom Styling ----------
+st.markdown(
+    """
+    <style>
+        /* App background */
+        .stApp {
+            background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+            color: #333333;
+            font-family: 'Segoe UI', sans-serif;
+        }
 
+        /* Titles */
+        h1 {
+            color: #1565c0;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 1px 1px #90caf9;
+        }
+        h2, h3 {
+            color: #ad1457;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        div.stButton > button {
+            background: linear-gradient(90deg, #42a5f5, #7e57c2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+        div.stButton > button:hover {
+            background: linear-gradient(90deg, #1e88e5, #5e35b1);
+            transform: scale(1.05);
+        }
+
+        /* Text area */
+        textarea {
+            border-radius: 10px !important;
+            border: 2px solid #42a5f5 !important;
+        }
+
+        /* History table */
+        table {
+            border: 2px solid #ab47bc;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th {
+            background-color: #7e57c2 !important;
+            color: white !important;
+        }
+        td {
+            background-color: #f3e5f5 !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------- App Title ----------
+st.title("🛠 Automated Troubleshooting Agent")
 st.write("This agent helps diagnose and resolve common IT/software problems.")
+
+# ---------- Initialize session state ----------
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "last_solution" not in st.session_state:
+    st.session_state.last_solution = ""
 
 # -------- Manual Troubleshooting --------
 st.subheader("🔍 Describe Your Problem")
 
 problem = st.text_area("Enter your issue here (e.g., 'WiFi not working', 'Laptop overheating').")
 
-if st.button("Troubleshoot"):
+if st.button("🔎 Troubleshoot"):
     if "wifi" in problem.lower():
-        st.write("📡 Possible Causes:")
-        st.write("- Router not connected to internet")
-        st.write("- Wrong WiFi password")
-        st.write("- Network driver issue")
-
-        st.write("🛠 Suggested Fixes:")
-        st.write("1. Restart your router and check the cables.")
-        st.write("2. Verify that the password is correct.")
-        st.write("3. Update/reinstall your network adapter driver.")
+        solution = (
+            "📡 **Possible Causes:**\n"
+            "- Router not connected to internet\n"
+            "- Wrong WiFi password\n"
+            "- Network driver issue\n\n"
+            "🛠 **Suggested Fixes:**\n"
+            "1. Restart your router and check the cables.\n"
+            "2. Verify that the password is correct.\n"
+            "3. Update/reinstall your network adapter driver."
+        )
+        st.success(solution)
 
     elif "slow" in problem.lower():
-        st.write("🐢 Possible Causes:")
-        st.write("- Too many background apps")
-        st.write("- Low RAM")
-        st.write("- Malware infection")
-
-        st.write("🛠 Suggested Fixes:")
-        st.write("1. Close unused programs.")
-        st.write("2. Upgrade RAM if possible.")
-        st.write("3. Run a full antivirus scan.")
+        solution = (
+            "🐢 **Possible Causes:**\n"
+            "- Too many background apps\n"
+            "- Low RAM\n"
+            "- Malware infection\n\n"
+            "🛠 **Suggested Fixes:**\n"
+            "1. Close unused programs.\n"
+            "2. Upgrade RAM if possible.\n"
+            "3. Run a full antivirus scan."
+        )
+        st.warning(solution)
 
     elif "overheat" in problem.lower() or "hot" in problem.lower():
-        st.write("🔥 Possible Causes:")
-        st.write("- Dust buildup in cooling fan")
-        st.write("- High CPU usage")
-        st.write("- Poor ventilation")
-
-        st.write("🛠 Suggested Fixes:")
-        st.write("1. Clean cooling vents and fans.")
-        st.write("2. Monitor CPU usage in Task Manager.")
-        st.write("3. Place laptop on a cooling pad for better airflow.")
+        solution = (
+            "🔥 **Possible Causes:**\n"
+            "- Dust buildup in cooling fan\n"
+            "- High CPU usage\n"
+            "- Poor ventilation\n\n"
+            "🛠 **Suggested Fixes:**\n"
+            "1. Clean cooling vents and fans.\n"
+            "2. Monitor CPU usage in Task Manager.\n"
+            "3. Place laptop on a cooling pad for better airflow."
+        )
+        st.error(solution)
 
     else:
-        st.write("🤔 Sorry, I don’t recognize that problem yet. Try describing it differently.")
+        solution = "🤔 Sorry, I don’t recognize that problem yet. Try describing it differently."
+        st.info(solution)
+
+    # Save to history
+    st.session_state.history.append({"Problem": problem, "Solution": solution})
+    st.session_state.last_solution = f"Problem: {problem}\n\nSolution:\n{solution}"
+
+# -------- Extra Buttons --------
+if st.session_state.last_solution:
+    st.download_button(
+        label="⬇️ Download Last Solution",
+        data=st.session_state.last_solution,
+        file_name="solution.txt",
+        mime="text/plain"
+    )
+
+if st.button("🧹 Clear All"):
+    st.session_state.history = []
+    st.session_state.last_solution = ""
+    st.experimental_rerun()
+
+# -------- History Log --------
+if st.session_state.history:
+    st.subheader("📜 Troubleshooting History")
+
+    # Add search bar
+    search_term = st.text_input("🔍 Search history by keyword")
+    hist_df = pd.DataFrame(st.session_state.history)
+
+    if search_term:
+        filtered = hist_df[hist_df.apply(lambda row: search_term.lower() in row.to_string().lower(), axis=1)]
+        st.table(filtered)
+    else:
+        st.table(hist_df)
 
 # -------- Bulk Troubleshooting --------
 st.subheader("📂 Bulk Troubleshooting via CSV")
@@ -71,20 +179,10 @@ if uploaded_file is not None:
     st.write("🔎 Troubleshooting Results:", df)
 
     # Option to download results
-    df.to_csv("troubleshooting_results.csv", index=False)
-    st.download_button("⬇️ Download Results", data=df.to_csv(index=False), file_name="troubleshooting_results.csv", mime="text/csv")
-# Download button
-if st.session_state.solution:
     st.download_button(
-        label="📥 Download Solution",
-        data=f"Problem: {problem}\n\nSuggested Solution: {st.session_state.solution}",
-        file_name="solution.txt",
-        mime="text/plain"
+        "⬇️ Download Results",
+        data=df.to_csv(index=False),
+        file_name="troubleshooting_results.csv",
+        mime="text/csv"
     )
 
-# Clear button
-if st.button("🧹 Clear All"):
-    st.session_state.problem = ""
-    st.session_state.solution = ""
-    st.session_state.email = ""
-    st.experimental_rerun()
