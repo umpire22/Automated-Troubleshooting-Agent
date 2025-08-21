@@ -1,67 +1,75 @@
 import streamlit as st
 import pandas as pd
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
-# Load secrets (stored safely in Streamlit Cloud settings)
-EMAIL_USER = st.secrets["EMAIL_USER"]
-EMAIL_PASS = st.secrets["EMAIL_PASS"]
+st.title("🛠 Automated Troubleshooting Agent")
 
-def send_email(receiver, subject, message):
-    sender_email = EMAIL_USER
-    sender_password = EMAIL_PASS
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
+st.write("This agent helps diagnose and resolve common IT/software problems.")
 
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = sender_email
-        msg["To"] = receiver
-        msg["Subject"] = subject
-        msg.attach(MIMEText(message, "plain"))
+# -------- Manual Troubleshooting --------
+st.subheader("🔍 Describe Your Problem")
 
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception as e:
-        return str(e)
+problem = st.text_area("Enter your issue here (e.g., 'WiFi not working', 'Laptop overheating').")
 
+if st.button("Troubleshoot"):
+    if "wifi" in problem.lower():
+        st.write("📡 Possible Causes:")
+        st.write("- Router not connected to internet")
+        st.write("- Wrong WiFi password")
+        st.write("- Network driver issue")
 
-# Streamlit UI
-st.title("🔧 Automated Troubleshooting Agent")
-st.write("This agent suggests fixes for common technical problems and can send them to your email.")
+        st.write("🛠 Suggested Fixes:")
+        st.write("1. Restart your router and check the cables.")
+        st.write("2. Verify that the password is correct.")
+        st.write("3. Update/reinstall your network adapter driver.")
 
-# Input area
-problem = st.text_area("Describe your issue:")
-email = st.text_input("Enter your email (to get the solution):")
+    elif "slow" in problem.lower():
+        st.write("🐢 Possible Causes:")
+        st.write("- Too many background apps")
+        st.write("- Low RAM")
+        st.write("- Malware infection")
 
-if st.button("Analyze Problem"):
-    if problem.strip() == "":
-        st.warning("⚠️ Please describe your issue first.")
+        st.write("🛠 Suggested Fixes:")
+        st.write("1. Close unused programs.")
+        st.write("2. Upgrade RAM if possible.")
+        st.write("3. Run a full antivirus scan.")
+
+    elif "overheat" in problem.lower() or "hot" in problem.lower():
+        st.write("🔥 Possible Causes:")
+        st.write("- Dust buildup in cooling fan")
+        st.write("- High CPU usage")
+        st.write("- Poor ventilation")
+
+        st.write("🛠 Suggested Fixes:")
+        st.write("1. Clean cooling vents and fans.")
+        st.write("2. Monitor CPU usage in Task Manager.")
+        st.write("3. Place laptop on a cooling pad for better airflow.")
+
     else:
-        # Simple troubleshooting suggestions
-        if "wifi" in problem.lower():
-            solution = "Check your router, restart it, or try reconnecting to the network."
-        elif "slow" in problem.lower():
-            solution = "Close unused programs, clear cache, and restart your device."
-        elif "error" in problem.lower():
-            solution = "Search the error code online, reinstall the app, or check for updates."
+        st.write("🤔 Sorry, I don’t recognize that problem yet. Try describing it differently.")
+
+# -------- Bulk Troubleshooting --------
+st.subheader("📂 Bulk Troubleshooting via CSV")
+
+uploaded_file = st.file_uploader("Upload a CSV file with a column named 'Problem'", type="csv")
+
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    st.write("Uploaded Problems:", df)
+
+    results = []
+    for issue in df["Problem"]:
+        if "wifi" in issue.lower():
+            results.append("Check router, verify password, update drivers")
+        elif "slow" in issue.lower():
+            results.append("Close apps, upgrade RAM, scan for malware")
+        elif "overheat" in issue.lower() or "hot" in issue.lower():
+            results.append("Clean fans, check CPU usage, use cooling pad")
         else:
-            solution = "Try basic troubleshooting: restart device, check connections, and update software."
+            results.append("Unknown issue — please provide more details")
 
-        st.success(f"✅ Suggested Solution: {solution}")
+    df["Suggested Solution"] = results
+    st.write("🔎 Troubleshooting Results:", df)
 
-        if email:
-            status = send_email(
-                email,
-                "Troubleshooting Suggestion",
-                f"Problem: {problem}\n\nSuggested Solution: {solution}"
-            )
-            if status is True:
-                st.info(f"📧 Solution also sent to {email}")
-            else:
-                st.error(f"❌ Failed to send email: {status}")
+    # Option to download results
+    df.to_csv("troubleshooting_results.csv", index=False)
+    st.download_button("⬇️ Download Results", data=df.to_csv(index=False), file_name="troubleshooting_results.csv", mime="text/csv")
