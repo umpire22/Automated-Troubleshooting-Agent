@@ -73,3 +73,18 @@ if uploaded_file is not None:
     # Option to download results
     df.to_csv("troubleshooting_results.csv", index=False)
     st.download_button("⬇️ Download Results", data=df.to_csv(index=False), file_name="troubleshooting_results.csv", mime="text/csv")
+# Download button
+if st.session_state.solution:
+    st.download_button(
+        label="📥 Download Solution",
+        data=f"Problem: {problem}\n\nSuggested Solution: {st.session_state.solution}",
+        file_name="solution.txt",
+        mime="text/plain"
+    )
+
+# Clear button
+if st.button("🧹 Clear All"):
+    st.session_state.problem = ""
+    st.session_state.solution = ""
+    st.session_state.email = ""
+    st.experimental_rerun()
