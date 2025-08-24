@@ -17,6 +17,9 @@ uploaded_file = st.file_uploader("Upload a text file with issues", type=["txt"])
 
 # --- Manual Input Method ---
 st.subheader("📝 Manual Input (copy & paste supported)")
+if "text_area" not in st.session_state:
+    st.session_state["text_area"] = ""
+
 manual_input = st.text_area("Paste your problem(s) here (one per line):", key="text_area")
 
 col1, col2, col3 = st.columns([1,1,2])
@@ -27,11 +30,12 @@ with col2:
 with col3:
     paste_clicked = st.button("📋 Paste from Clipboard")
 
+# --- Button Actions ---
 if clear_clicked:
-    st.session_state["text_area"] = ""  # clears text area
+    st.session_state.text_area = ""   # Reset the text area
 
 if paste_clicked:
-    st.session_state["text_area"] = st.experimental_get_query_params().get("clipboard", [""])[0]
+    st.session_state.text_area = st.experimental_get_query_params().get("clipboard", [""])[0]
 
 problems, results = [], []
 
@@ -151,8 +155,8 @@ st.markdown("""
     div[data-testid="stTextArea"] textarea {
         border: 2px solid #1E88E5; 
         font-weight: 500;
-        background: #FFFFFF;   /* plain white */
-        color: #000000;        /* black text */
+        background: #FFFFFF;
+        color: #000000;
     }
 
     /* Results table */
@@ -161,7 +165,7 @@ st.markdown("""
         border-radius: 10px;
     }
 
-    /* Make dataframe header row bold & colorful */
+    /* Dataframe header row */
     .stDataFrame thead tr th {
         background-color: #FF5722 !important;
         color: white !important;
