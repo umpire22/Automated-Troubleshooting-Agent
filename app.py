@@ -74,9 +74,14 @@ if analyze_clicked:
             key="download-excel"
         )
 
-# --- Custom CSS for button colors ---
+# --- Custom CSS for background + styling ---
 st.markdown("""
     <style>
+    /* Background gradient */
+    .stApp {
+        background: linear-gradient(135deg, #FFDEE9, #B5FFFC);
+    }
+
     div[data-testid="stDownloadButton"] > button,
     div[data-testid="stFileUploader"] button,
     div[data-testid="stTextArea"] textarea,
@@ -129,11 +134,19 @@ st.markdown("""
         color: white;
     }
 
-    /* Text area highlight */
+    /* Text area (manual input) */
     div[data-testid="stTextArea"] textarea {
-        border: 2px solid #FF9800; 
+        border: 2px solid #1E88E5; 
         font-weight: 500;
-        background: #FFF8E1;
+        background: #E3F2FD;   /* light blue */
+        color: #000000;        /* black text */
+    }
+
+    /* Results table glow */
+    .stDataFrame {
+        border: 2px solid #4CAF50;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.15);
+        border-radius: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
