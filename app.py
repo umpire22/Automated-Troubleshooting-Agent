@@ -4,7 +4,12 @@ import pandas as pd
 
 st.set_page_config(page_title="Troubleshooting Agent", page_icon="⚡", layout="centered")
 
-st.title("⚡ Automated Troubleshooting Agent")
+# --- Header with custom color ---
+st.markdown("""
+    <h1 style='text-align: center; color: #FF5722; font-size: 2.5em;'>
+        ⚡ Automated Troubleshooting Agent
+    </h1>
+""", unsafe_allow_html=True)
 
 # --- Upload Method ---
 st.subheader("📂 Upload a File")
@@ -49,7 +54,12 @@ if analyze_clicked:
 
         df = pd.DataFrame({"Problem": problems, "Suggested Solution": results})
         st.success("✅ Analysis complete! See results below.")
-        st.write("🔎 Troubleshooting Results:", df)
+
+        # --- Centered Results Table ---
+        st.markdown("<div class='centered'>", unsafe_allow_html=True)
+        st.write("🔎 Troubleshooting Results:")
+        st.dataframe(df, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         # --- CSV download ---
         st.download_button(
@@ -74,14 +84,17 @@ if analyze_clicked:
             key="download-excel"
         )
 
-# --- Custom CSS for background + styling ---
+# --- Custom CSS for styling ---
 st.markdown("""
     <style>
-    /* Background gradient */
-    .stApp {
-        background: linear-gradient(135deg, #FFDEE9, #B5FFFC);
+    /* Center elements */
+    .centered {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
     }
 
+    /* Upload + buttons styling */
     div[data-testid="stDownloadButton"] > button,
     div[data-testid="stFileUploader"] button,
     div[data-testid="stTextArea"] textarea,
@@ -101,7 +114,7 @@ st.markdown("""
         background-color: #7B1FA2;
     }
 
-    /* Analyze button (gradient) */
+    /* Analyze button (orange gradient) */
     div[data-testid="stButton"] > button:has(span:contains("Analyze")) {
         background: linear-gradient(45deg, #FF5722, #FFC107);
         color: white;
@@ -134,19 +147,26 @@ st.markdown("""
         color: white;
     }
 
-    /* Text area (manual input) */
+    /* Text area */
     div[data-testid="stTextArea"] textarea {
         border: 2px solid #1E88E5; 
         font-weight: 500;
-        background: #E3F2FD;   /* light blue */
+        background: #FFFFFF;   /* plain white */
         color: #000000;        /* black text */
     }
 
-    /* Results table glow */
+    /* Results table */
     .stDataFrame {
         border: 2px solid #4CAF50;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.15);
         border-radius: 10px;
+    }
+
+    /* Make dataframe header row bold & colorful */
+    .stDataFrame thead tr th {
+        background-color: #FF5722 !important;
+        color: white !important;
+        font-weight: bold;
+        text-align: center !important;
     }
     </style>
 """, unsafe_allow_html=True)
