@@ -2,6 +2,8 @@ import io
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(page_title="Troubleshooting Agent", page_icon="⚡", layout="centered")
+
 st.title("⚡ Automated Troubleshooting Agent")
 
 # --- Upload Method ---
@@ -9,68 +11,109 @@ st.subheader("📂 Upload a File")
 uploaded_file = st.file_uploader("Upload a text file with issues", type=["txt"])
 
 # --- Manual Input Method ---
-st.subheader("📝 Manual Input Troubleshooting")
-manual_input = st.text_area("Enter your problem(s) here (one per line):")
+st.subheader("📝 Manual Input (copy & paste supported)")
+manual_input = st.text_area("Paste your problem(s) here (one per line):", key="text_area")
+
+col1, col2, col3 = st.columns([1,1,2])
+with col1:
+    analyze_clicked = st.button("🔍 Analyze Problems")
+with col2:
+    clear_clicked = st.button("🧹 Clear All")
+with col3:
+    paste_clicked = st.button("📋 Paste from Clipboard")
+
+if clear_clicked:
+    st.session_state["text_area"] = ""  # clears text area
+
+if paste_clicked:
+    st.session_state["text_area"] = st.experimental_get_query_params().get("clipboard", [""])[0]
 
 problems, results = [], []
 
-if uploaded_file:
-    problems = uploaded_file.read().decode("utf-8").splitlines()
+if analyze_clicked:
+    if uploaded_file:
+        problems = uploaded_file.read().decode("utf-8").splitlines()
+    elif manual_input:
+        problems = manual_input.split("\n")
 
-elif manual_input:
-    problems = manual_input.split("\n")
+    if problems:
+        for issue in problems:
+            if "wifi" in issue.lower():
+                results.append("Check router, verify password, update drivers")
+            elif "slow" in issue.lower():
+                results.append("Close apps, upgrade RAM, scan for malware")
+            elif "overheat" in issue.lower() or "hot" in issue.lower():
+                results.append("Clean fans, check CPU usage, use cooling pad")
+            else:
+                results.append("Unknown issue — please provide more details")
 
-if problems:
-    for issue in problems:
-        if "wifi" in issue.lower():
-            results.append("Check router, verify password, update drivers")
-        elif "slow" in issue.lower():
-            results.append("Close apps, upgrade RAM, scan for malware")
-        elif "overheat" in issue.lower() or "hot" in issue.lower():
-            results.append("Clean fans, check CPU usage, use cooling pad")
-        else:
-            results.append("Unknown issue — please provide more details")
+        df = pd.DataFrame({"Problem": problems, "Suggested Solution": results})
+        st.success("✅ Analysis complete! See results below.")
+        st.write("🔎 Troubleshooting Results:", df)
 
-    df = pd.DataFrame({"Problem": problems, "Suggested Solution": results})
-    st.write("🔎 Troubleshooting Results:", df)
+        # --- CSV download ---
+        st.download_button(
+            "⬇️ Download as CSV",
+            df.to_csv(index=False),
+            "results.csv",
+            "text/csv",
+            key="download-csv"
+        )
 
-    # --- CSV download ---
-    st.download_button(
-        "⬇️ Download as CSV",
-        df.to_csv(index=False),
-        "results.csv",
-        "text/csv",
-        key="download-csv"
-    )
+        # --- Excel download ---
+        excel_buffer = io.BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Results")
+        excel_buffer.seek(0)
 
-    # --- Excel download ---
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Results")
-    excel_buffer.seek(0)
-
-    st.download_button(
-        "⬇️ Download as Excel",
-        excel_buffer,
-        "results.xlsx",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download-excel"
-    )
+        st.download_button(
+            "⬇️ Download as Excel",
+            excel_buffer,
+            "results.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="download-excel"
+        )
 
 # --- Custom CSS for button colors ---
 st.markdown("""
     <style>
     div[data-testid="stDownloadButton"] > button,
     div[data-testid="stFileUploader"] button,
-    div[data-testid="stTextArea"] textarea {
-        border-radius: 8px;
+    div[data-testid="stTextArea"] textarea,
+    div[data-testid="stButton"] > button {
+        border-radius: 10px;
         font-weight: 600;
-        padding: 0.6em 1.2em;
+        padding: 0.6em 1.4em;
+        transition: 0.3s;
     }
 
     /* Upload button (purple) */
     div[data-testid="stFileUploader"] button {
         background-color: #9C27B0;
+        color: white;
+    }
+    div[data-testid="stFileUploader"] button:hover {
+        background-color: #7B1FA2;
+    }
+
+    /* Analyze button (gradient) */
+    div[data-testid="stButton"] > button:has(span:contains("Analyze")) {
+        background: linear-gradient(45deg, #FF5722, #FFC107);
+        color: white;
+        font-size: 1.1em;
+        border: none;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Clear button (grey) */
+    div[data-testid="stButton"] > button:has(span:contains("Clear")) {
+        background-color: #9E9E9E;
+        color: white;
+    }
+
+    /* Paste button (teal) */
+    div[data-testid="stButton"] > button:has(span:contains("Paste")) {
+        background-color: #009688;
         color: white;
     }
 
@@ -86,10 +129,11 @@ st.markdown("""
         color: white;
     }
 
-    /* Text area (manual input box highlight) */
+    /* Text area highlight */
     div[data-testid="stTextArea"] textarea {
-        border: 2px solid #FF9800; /* Orange border */
+        border: 2px solid #FF9800; 
         font-weight: 500;
+        background: #FFF8E1;
     }
     </style>
 """, unsafe_allow_html=True)
